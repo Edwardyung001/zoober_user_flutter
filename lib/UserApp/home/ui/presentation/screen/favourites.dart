@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zooberuserapp/UserApp/home/ui/presentation/bloc/home_bloc.dart';
 import 'package:zooberuserapp/constants/colors.dart';
+import 'package:zooberuserapp/storage/local_storage.dart';
 import 'package:zooberuserapp/utils/custombutton.dart';
 
 class NewFavourites extends StatelessWidget {
@@ -28,7 +31,7 @@ class NewFavourites extends StatelessWidget {
             child: Container(
               color: Colors.white,
               padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -70,7 +73,7 @@ class NewFavourites extends StatelessWidget {
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle:
-                              Text("Lorem ipsum dolor sit amet, consectetur"),
+                          Text("Lorem ipsum dolor sit amet, consectetur"),
                         ),
                       ),
                       Icon(Icons.search, color: Colors.grey),
@@ -87,22 +90,32 @@ class NewFavourites extends StatelessWidget {
                   Wrap(
                     spacing: 10.0,
                     children: [
-                      _buildLocationButton("🏠 Home", true, Icons.home),
+                      _buildLocationButton(context, "🏠 Home", true, Icons.home),
                       _buildLocationButton(
-                          "💼 Work", false, Icons.work_outline_sharp),
+                          context, "💼 Work", false, Icons.work_outline_sharp),
                       _buildLocationButton(
-                          "💪 Gym", false, Icons.fitness_center_outlined),
-                      _buildLocationButton("🎓 College", false, Icons.school),
-                      _buildLocationButton("🏨 Hostel", false, Icons.business),
+                          context, "💪 Gym", false, Icons.fitness_center_outlined),
+                      _buildLocationButton(context, "🎓 College", false, Icons.school),
+                      _buildLocationButton(context, "🏨 Hostel", false, Icons.business),
                       _buildLocationButton(
-                          "😊 Others", false, Icons.catching_pokemon_sharp),
+                          context, "😊 Others", false, Icons.catching_pokemon_sharp),
                     ],
                   ),
-                  const Spacer(),
-                  // Add to Favourite Button
-                  const SizedBox(
-                      width: double.infinity,
-                      child: custombutton(text: "Add to favourite")),
+
+                  // SizedBox(
+                  //     height: 50,
+                  //     width: double.infinity,
+                  //     child: InkWell(
+                  //         onTap: () {
+                  //           showModalBottomSheet(
+                  //             context: context,
+                  //             isScrollControlled:
+                  //             true, // Allows the bottom sheet to adapt to its content
+                  //             builder: (context) =>
+                  //                 AddFavouriteListBottomSheet(locationLabel: "Unknown Location"), // Provide default or custom label
+                  //           );
+                  //         },
+                  //         child: custombutton(text: "Add to favourite"))),
                 ],
               ),
             ),
@@ -112,9 +125,17 @@ class NewFavourites extends StatelessWidget {
     );
   }
 
-  Widget _buildLocationButton(String label, bool isSelected, IconData icon) {
+  Widget _buildLocationButton(
+      BuildContext context, String label, bool isSelected, IconData icon) {
     return TextButton(
-      onPressed: () {},
+      onPressed: () {
+        // Open the bottom sheet with the selected location label
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true, // Allows the bottom sheet to adapt to its content
+          builder: (context) => AddFavouriteListBottomSheet(locationLabel: label),
+        );
+      },
       style: ElevatedButton.styleFrom(
         foregroundColor: isSelected ? Colors.white : Colors.black,
         backgroundColor: isSelected ? buttonrightcolor : Colors.white,
@@ -125,6 +146,84 @@ class NewFavourites extends StatelessWidget {
         ),
       ),
       child: Text(label),
+    );
+  }
+}
+
+class AddFavouriteListBottomSheet extends StatelessWidget {
+  final descriptionController = TextEditingController();
+  final String locationLabel; // Store the selected location label
+
+  AddFavouriteListBottomSheet({required this.locationLabel}); // Receive the location label
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<HomeBloc, HomeState>(
+      listener: (context, state) async {
+        if (state is HomeLoading) {
+          // Show loading snackbar or indicator
+        } else if (state is UpdateProfileSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+          final userId = await SecureStorage.getValue('userId');
+          context
+              .read<HomeBloc>()
+              .add(FetchingProfileRequested(userId: userId!));
+        } else if (state is HomeFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: ${state.error}")),
+          );
+          print("Error: ${state.error}");
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Container(
+          color: white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: Colors.grey,
+                thickness: 3,
+                indent: MediaQuery.of(context).size.width * 0.4,
+                endIndent: MediaQuery.of(context).size.width * 0.4,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Add Description for $locationLabel', // Display the selected location label
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.description),
+                  labelText: 'Description',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                  width: double.infinity,
+                  child: InkWell(
+                      onTap: () async {
+                        final description = descriptionController.text.trim();
+                        context.read<HomeBloc>().add(AddFavouriteListRequested(
+                          title: locationLabel, // Use the location label
+                          description: description,
+                        ));
+                        Navigator.pop(context); // close bottom sheet
+                      },
+                      child: custombutton(text: "Save Changes"))),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -7,4 +7,8 @@ abstract class SplashscreenActionState extends SplashscreenState {}
 
 class SplashscreenInitial extends SplashscreenState {}
 
-class SplashScreenRoutingState extends SplashscreenActionState {}
+class SplashScreenRoutingState extends SplashscreenActionState {
+  final bool toLogin;
+
+  SplashScreenRoutingState({required this.toLogin});
+}

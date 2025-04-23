@@ -1,8 +1,8 @@
 class FetchingProfileEntity {
+  final List<Map<String, dynamic>> userDetails;
 
-  final String message;
 
   FetchingProfileEntity({
-  required this.message,
+  required this.userDetails,
   });
 }

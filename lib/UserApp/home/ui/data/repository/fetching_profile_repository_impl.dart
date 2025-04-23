@@ -14,6 +14,6 @@ Future<FetchingProfileEntity> profileFetching(String userId) async {
   final FetchingProfileModel fetchingProfileModel = await fetchingProfileDatasource.profileFetching(userId);
 
   return FetchingProfileEntity(
-      message: fetchingProfileModel.message,);
+    userDetails: fetchingProfileModel.userDetails,);
   }
 }

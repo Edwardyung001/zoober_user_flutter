@@ -1,23 +1,23 @@
-import 'package:zooberuserapp/UserApp/auth/domain/entity/signup_entity.dart';
+class LoginModel {
+  final bool success;
+  final String message;
+  final String token;
+  final int userId;
 
-
-class LoginModel extends SignupEntity {
   LoginModel({
-    required bool success,
-    required String message,
-  }) : super(success: success, message: message);
+    required this.success,
+    required this.message,
+    required this.token,
+    required this.userId,
+  });
 
   factory LoginModel.fromJson(Map<String, dynamic> json) {
     return LoginModel(
-      success: json['success'] ?? false,
-      message: json['message'] ?? '',
-    );
-  }
+      success: json['success']??false ,
+      message: json['message'],
+      token: json['token'],
+      userId: json['user']['id'],
 
-  Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      'message': message,
-    };
+    );
   }
 }

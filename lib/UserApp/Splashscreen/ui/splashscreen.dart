@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zooberuserapp/UserApp/auth/presentation/screen/login.dart';
+import 'package:zooberuserapp/UserApp/home/ui/presentation/screen/home.dart';
 import '../../../constants/blocs.dart';
 import '../../../constants/colors.dart';
 import '../../../constants/images.dart';
@@ -50,7 +51,11 @@ class _SplashscreenState extends State<Splashscreen>
         listenWhen: (previous, current) => current is SplashscreenActionState,
         listener: (context, state) {
           if (state is SplashScreenRoutingState) {
-            navigateTo(context, LoginScreen());
+            if (state.toLogin) {
+              navigateTo(context, LoginScreen());
+            } else {
+              navigateTo(context, HomeScreen()); // or your HomeScreen()
+            }
           }
         },
         builder: (context, state) {

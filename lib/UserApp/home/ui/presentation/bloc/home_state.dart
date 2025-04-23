@@ -18,9 +18,17 @@ class UpdateProfileSuccess extends HomeState {
 }
 
 class FetchingProfileSuccess extends HomeState {
-  final String message;
-  FetchingProfileSuccess(this.message);
+  final List<Map<String, dynamic>> userDetails;
+  FetchingProfileSuccess(this.userDetails);
 }
+
+
+class FetchingFavouriteSuccess extends HomeState {
+  final List<Map<String, dynamic>> favouriteList;
+
+  FetchingFavouriteSuccess(this.favouriteList);
+}
+
 
 
 class HomeFailure extends HomeState {

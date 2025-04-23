@@ -2,9 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zooberuserapp/UserApp/home/ui/presentation/bloc/home_bloc.dart';
 import 'package:zooberuserapp/constants/colors.dart';
+import 'package:zooberuserapp/storage/local_storage.dart';
 import 'package:zooberuserapp/utils/custombutton.dart';
 
-class ProfileEditPage extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    fetching();
+  }
+
+  void fetching() async {
+    final userId = await SecureStorage.getValue('userId');
+    if (userId != null) {
+      context.read<HomeBloc>().add(FetchingProfileRequested(userId: userId));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -20,149 +39,172 @@ class ProfileEditPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(screenWidth * 0.05),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: screenHeight * 0.02),
+      body: BlocConsumer<HomeBloc, HomeState>(
+        listener: (context, state) {
+          if (state is HomeFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error: ${state.error}")),
+            );
+            print(state.error);
+          }
+        },
+        builder: (context, state) {
+          if (state is HomeLoading) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state is FetchingProfileSuccess) {
+            final userDetails = state.userDetails;
+            print(userDetails);
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(screenWidth * 0.05),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: screenHeight * 0.02),
+                    CircleAvatar(
+                      radius: profileImageSize / 2,
+                      backgroundImage: NetworkImage(
+                          "https://img.freepik.com/premium-photo/3d-style-avatar-profile-picture-featuring-male-character-generative-ai_739548-13626.jpg"),
+                    ),
+                    SizedBox(height: screenHeight * 0.01),
+                    Text(
+                      userDetails[0]['firstname'] ?? '',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'Upload photo',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.03),
 
-              CircleAvatar(
-                radius: profileImageSize / 2,
-                backgroundImage: const NetworkImage(
-                    "https://img.freepik.com/premium-photo/3d-style-avatar-profile-picture-featuring-male-character-generative-ai_739548-13626.jpg"),
-              ),
-              SizedBox(height: screenHeight * 0.01),
-              const Text(
-                "Lokeshwaran",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Upload photo',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    color: Colors.blue,
-                  ),
+                    /// Username
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          backgroundColor: Colors.white,
+                          context: context,
+                          isScrollControlled: true,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          builder: (_) => Padding(
+                            padding: MediaQuery.of(context).viewInsets,
+                            child: EditNameBottomSheet(),
+                          ),
+                        );
+                      },
+                      child: _buildReadOnlyField(
+                        'Username',
+                        userDetails[0]['firstname'] ?? '',
+                        screenWidth,
+                      ),
+                    ),
+
+                    /// Phone number
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          backgroundColor: Colors.white,
+                          context: context,
+                          isScrollControlled: true,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          builder: (_) => Padding(
+                            padding: MediaQuery.of(context).viewInsets,
+                            child: EditNoBottomSheet(),
+                          ),
+                        );
+                      },
+                      child: _buildReadOnlyField(
+                        'Phone number',
+                        userDetails[0]['mobile'] ?? '+91 XXXXX XXXXX',
+                        screenWidth,
+                      ),
+                    ),
+
+                    /// Email
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          backgroundColor: Colors.white,
+                          context: context,
+                          isScrollControlled: true,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          builder: (_) => Padding(
+                            padding: MediaQuery.of(context).viewInsets,
+                            child: EditEmailBottomSheet(),
+                          ),
+                        );
+                      },
+                      child: _buildReadOnlyField(
+                        'Email',
+                        userDetails[0]['email'] ?? "Not available",
+                        screenWidth,
+                      ),
+                    ),
+
+                    /// Gender
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          backgroundColor: Colors.white,
+                          context: context,
+                          isScrollControlled: true,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          builder: (_) => Padding(
+                            padding: MediaQuery.of(context).viewInsets,
+                            child: EditGender(),
+                          ),
+                        );
+                      },
+                      child: _buildReadOnlyField(
+                        'Gender',
+                        userDetails[0]['gender'] ?? "Not specified",
+                        screenWidth,
+                      ),
+                    ),
+
+                    /// Birthday
+                    InkWell(
+                      onTap: () {
+                        showDatePicker(
+                          context: context,
+                          initialDate:
+                              DateTime.now().subtract(Duration(days: 365 * 18)),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                      },
+                      child: _buildReadOnlyField(
+                        'Birthday',
+                        userDetails[0]['dob'] ?? "Not set",
+                        screenWidth,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            );
+          }
 
-              SizedBox(height: screenHeight * 0.03),
-
-              // Input Fields
-              InkWell(
-                  onTap: () {
-                    showModalBottomSheet(
-                      backgroundColor: white,
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(16)),
-                      ),
-                      builder: (BuildContext context) {
-                        return Padding(
-                          padding: MediaQuery.of(context).viewInsets,
-                          child: EditNameBottomSheet(),
-                        );
-                      },
-                    );
-                  },
-                  child:
-                      _buildReadOnlyField('Username', 'Loke112', screenWidth)),
-
-              InkWell(
-                onTap: () {
-                  showModalBottomSheet(
-                    backgroundColor: white,
-                    context: context,
-                    isScrollControlled: true,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    builder: (BuildContext context) {
-                      return Padding(
-                        padding: MediaQuery.of(context).viewInsets,
-                        child: EditNoBottomSheet(),
-                      );
-                    },
-                  );
-                },
-                child: _buildReadOnlyField(
-                    'Phone number', '+91 9988 77665', screenWidth),
-              ),
-              GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      backgroundColor: white,
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(16)),
-                      ),
-                      builder: (BuildContext context) {
-                        return Padding(
-                          padding: MediaQuery.of(context).viewInsets,
-                          child: EditEmailBottomSheet(),
-                        );
-                      },
-                    );
-                  },
-                  child: _buildReadOnlyField(
-                      'Email', 'Loke1128@gmail.com', screenWidth)),
-              InkWell(
-                  onTap: () {
-                    showModalBottomSheet(
-                      backgroundColor: white,
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(16)),
-                      ),
-                      builder: (BuildContext context) {
-                        return Padding(
-                          padding: MediaQuery.of(context).viewInsets,
-                          child: EditGender(),
-                        );
-                      },
-                    );
-                  },
-                  child: _buildReadOnlyField('Gender', 'Male', screenWidth)),
-              InkWell(
-                  onTap: () {
-                    showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now().subtract(Duration(
-                            days: 365 * 18)), // Default to 18 years ago
-                        firstDate:
-                            DateTime(1900), // Allow DOBs starting from 1900
-                        lastDate: DateTime.now());
-                  },
-                  child: _buildReadOnlyField(
-                      'Birthday', 'April 16, 198', screenWidth)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-      String label, String initialValue, double screenWidth) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: screenWidth * 0.02),
-      child: TextFormField(
-        initialValue: initialValue,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(fontSize: screenWidth * 0.045),
-        ),
-        style: TextStyle(fontSize: screenWidth * 0.055),
+          return Center(child: Text("Failed to load profile"));
+        },
       ),
     );
   }
@@ -174,19 +216,16 @@ class ProfileEditPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: screenWidth * 0.04),
-          ),
+          Text(label, style: TextStyle(fontSize: screenWidth * 0.04)),
           SizedBox(height: screenWidth * 0.01),
           Row(
             children: [
               Text(
-                value + "      ",
+                "$value      ",
                 style: TextStyle(
                     fontSize: screenWidth * 0.035, color: Colors.grey),
               ),
-              const Icon(Icons.arrow_forward_ios_outlined, size: 25)
+              const Icon(Icons.arrow_forward_ios_outlined, size: 25),
             ],
           ),
         ],
@@ -201,16 +240,18 @@ class EditNameBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<HomeBloc, HomeState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is HomeLoading) {
           // Show loading snackbar or indicator
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Signing up...")),
-          );
+
         } else if (state is UpdateProfileSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
+          final userId = await SecureStorage.getValue('userId');
+          context
+              .read<HomeBloc>()
+              .add(FetchingProfileRequested(userId: userId!));
         } else if (state is HomeFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Error: ${state.error}")),
@@ -259,20 +300,7 @@ class EditNameBottomSheet extends StatelessWidget {
                   labelText: 'Last Name',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () {
-                      final firstName = firstNameController.text.trim();
-                      final lastName = lastNameController.text.trim();
-                      context.read<HomeBloc>().add(UpdateProfileRequested(
-                            firstName: firstName,
-                            lastName: lastName,
-                            mobile: '',
-                            email: '',
-                            gender: '',
-                            dob: '',
-                            image: '',
-                        userId: '',
-                          ));
-                    },
+                    onPressed: () {},
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -280,9 +308,21 @@ class EditNameBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const SizedBox(
+              SizedBox(
                   width: double.infinity,
-                  child: custombutton(text: "Save Changes")),
+                  child: InkWell(
+                      onTap: () async {
+                        final firstName = firstNameController.text.trim();
+                        final lastName = lastNameController.text.trim();
+                        String? userId = await SecureStorage.getValue('userId');
+                        context.read<HomeBloc>().add(FirstProfileRequested(
+                              firstName: firstName,
+                              lastName: lastName,
+                              userId: userId!,
+                            ));
+                        Navigator.pop(context); // close bottom sheet
+                      },
+                      child: custombutton(text: "Save Changes"))),
               const SizedBox(height: 16),
             ],
           ),
@@ -293,46 +333,79 @@ class EditNameBottomSheet extends StatelessWidget {
 }
 
 class EditNoBottomSheet extends StatelessWidget {
+  final phoneNumberController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        color: white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Divider(
-              color: Colors.grey,
-              thickness: 3,
-              indent: MediaQuery.of(context).size.width * 0.4,
-              endIndent: MediaQuery.of(context).size.width * 0.4,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Edit Phone number',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.phone),
-                labelText: 'New Phone Number',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {},
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+    return BlocListener<HomeBloc, HomeState>(
+        listener: (context, state) async {
+          if (state is HomeLoading) {
+
+          } else if (state is UpdateProfileSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+            final userId = await SecureStorage.getValue('userId');
+            context
+                .read<HomeBloc>()
+                .add(FetchingProfileRequested(userId: userId!));
+          } else if (state is HomeFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error: ${state.error}")),
+            );
+            print("Error: ${state.error}");
+          }
+        },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Container(
+          color: white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: Colors.grey,
+                thickness: 3,
+                indent: MediaQuery.of(context).size.width * 0.4,
+                endIndent: MediaQuery.of(context).size.width * 0.4,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Edit Phone number',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneNumberController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.phone),
+                  labelText: 'New Phone Number',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {},
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const SizedBox(
-                width: double.infinity,
-                child: custombutton(text: "Save Changes")),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+              SizedBox(
+                  width: double.infinity,
+                  child: InkWell(
+                      onTap: () async {
+                        final phoneNumber = phoneNumberController.text.trim();
+                        String? userId = await SecureStorage.getValue('userId');
+                        context.read<HomeBloc>().add(MobileProfileRequested(
+                              userId: userId!,
+                              mobile: phoneNumber,
+                            ));
+                        Navigator.pop(context); // close bottom sheet
+
+                      },
+                      child: custombutton(text: "Save Changes"))),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -340,59 +413,131 @@ class EditNoBottomSheet extends StatelessWidget {
 }
 
 class EditEmailBottomSheet extends StatelessWidget {
+  final emailController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        color: white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Divider(
-              color: Colors.grey,
-              thickness: 3,
-              indent: MediaQuery.of(context).size.width * 0.4,
-              endIndent: MediaQuery.of(context).size.width * 0.4,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Edit Email ID',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.phone),
-                labelText: 'New Email ID',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {},
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+    return BlocListener<HomeBloc, HomeState>(
+      listener: (context, state) async {
+        if (state is HomeLoading) {
+          // Show loading snackbar or indicator
+
+        } else if (state is UpdateProfileSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+          final userId = await SecureStorage.getValue('userId');
+          context
+              .read<HomeBloc>()
+              .add(FetchingProfileRequested(userId: userId!));
+          Navigator.pop(context); // close bottom sheet
+        } else if (state is HomeFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: ${state.error}")),
+          );
+          print("Error: ${state.error}");
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Container(
+          color: white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: Colors.grey,
+                thickness: 3,
+                indent: MediaQuery.of(context).size.width * 0.4,
+                endIndent: MediaQuery.of(context).size.width * 0.4,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Edit Email ID',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.phone),
+                  labelText: 'New Email ID',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {},
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const SizedBox(
-                width: double.infinity,
-                child: custombutton(text: "Save Changes")),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+              SizedBox(
+                  width: double.infinity,
+                  child: InkWell(
+                      onTap: () async {
+                        final email = emailController.text.trim();
+                        String? userId = await SecureStorage.getValue('userId');
+                        context.read<HomeBloc>().add(EmailProfileRequested(
+                              userId: userId!,
+                              email: email,
+                            ));
+                        Navigator.pop(context); // close bottom sheet
+
+                      },
+                      child: custombutton(text: "Save Changes"))),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class EditGender extends StatelessWidget {
+class EditGender extends StatefulWidget {
+  @override
+  State<EditGender> createState() => _EditGenderState();
+}
+
+class _EditGenderState extends State<EditGender> {
+  String? selectedGender;
+
+  void saveGender() async {
+    final userId = await SecureStorage.getValue('userId');
+
+    if (selectedGender != null && userId != null) {
+      context.read<HomeBloc>().add(GenderProfileRequested(
+            userId: userId,
+            gender: selectedGender!,
+          ));
+      Navigator.pop(context); // close bottom sheet
+
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        color: white,
+    return BlocListener<HomeBloc, HomeState>(
+      listener: (context, state) async {
+        if (state is HomeLoading) {
+
+        } else if (state is UpdateProfileSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+          final userId = await SecureStorage.getValue('userId');
+          context
+              .read<HomeBloc>()
+              .add(FetchingProfileRequested(userId: userId!));
+        } else if (state is HomeFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: ${state.error}")),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -411,61 +556,55 @@ class EditGender extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(18.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.male_outlined,
-                          size: 40,
-                        ),
-                        Text(
-                          "Male",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-                Container(
-                    decoration: BoxDecoration(
-                        border: Border.all(),
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Padding(
-                        padding: const EdgeInsets.all(18.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.female_outlined,
-                              size: 40,
-                            ),
-                            Text(
-                              "Female",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 20),
-                            )
-                          ],
-                        ))),
+                _genderCard("Male", Icons.male_outlined),
+                _genderCard("Female", Icons.female_outlined),
               ],
             ),
+            const SizedBox(height: 20),
             SizedBox(
-              height: 20,
+              width: double.infinity,
+              child: InkWell(
+                  onTap: saveGender, child: custombutton(text: "Save Changes")),
             ),
-            const SizedBox(
-                width: double.infinity,
-                child: custombutton(text: "Save Changes")),
             const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _genderCard(String label, IconData icon) {
+    final isSelected = selectedGender == label;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedGender = label;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: isSelected ? Colors.blue : Colors.grey),
+          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+        ),
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            Icon(icon,
+                size: 40, color: isSelected ? Colors.blue : Colors.black),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: isSelected ? Colors.blue : Colors.black,
+              ),
+            ),
           ],
         ),
       ),

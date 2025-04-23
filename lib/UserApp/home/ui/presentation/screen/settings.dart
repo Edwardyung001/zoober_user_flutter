@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zooberuserapp/UserApp/home/ui/presentation/screen/myaccount.dart';
+import 'package:zooberuserapp/UserApp/home/ui/presentation/screen/profilescreen.dart';
 import 'package:zooberuserapp/constants/colors.dart';
 import 'package:zooberuserapp/constants/mediaquery.dart';
 import 'package:zooberuserapp/constants/routing.dart';
@@ -44,7 +45,7 @@ class SettingsPage extends StatelessWidget {
             ),
             InkWell(
               onTap: () {
-                navigateTo(context, ProfileEditPage());
+                navigateTo(context, ProfileScreen());
               },
               child: _buildSettingsItem(
                   context, Icons.person_outline, 'Profile', Color(0xffFF9500)),

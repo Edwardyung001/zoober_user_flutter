@@ -4,6 +4,7 @@ import 'package:zooberuserapp/UserApp/auth/presentation/bloc/auth_bloc.dart';
 import 'package:zooberuserapp/UserApp/auth/presentation/screen/signup.dart';
 import 'package:zooberuserapp/UserApp/home/ui/presentation/screen/home.dart';
 import 'package:zooberuserapp/constants/routing.dart';
+import 'package:zooberuserapp/storage/local_storage.dart';
 import 'package:zooberuserapp/utils/custombutton.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
+        listener: (context, state) async{
           if (state is AuthLoading) {
             // Show loading snackbar or indicator
             ScaffoldMessenger.of(context).showSnackBar(
@@ -39,6 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
+            await SecureStorage.saveValue('token', state.token);
+            await SecureStorage.saveValue('userId', state.userId.toString());
             navigateTo(context, HomeScreen());
           } else if (state is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +148,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       }
                     },
-                    child: custombutton(text: "Send Otp")),
+                    child: custombutton(
+                        text: "Send Otp")),
                 SizedBox(height: mediaQuery.height * 0.1), // Spacer
 
                 InkWell(

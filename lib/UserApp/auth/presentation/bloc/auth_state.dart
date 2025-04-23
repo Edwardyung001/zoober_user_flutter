@@ -14,7 +14,9 @@ class SignupSuccess extends AuthState {
 
 class LoginSuccess extends AuthState {
   final String message;
-  LoginSuccess(this.message);
+  final String token;
+  final int userId;
+  LoginSuccess(this.message,this.token,this.userId);
 }
 
 
